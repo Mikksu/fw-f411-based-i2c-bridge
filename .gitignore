@@ -1,0 +1,14 @@
+Firmware_analog_expander.si4project/
+Debug/
+STM32CubeIDE/Application/
+STM32CubeIDE/Drivers/
+STM32CubeIDE/Middlewares/
+STM32CubeIDE/.settings/
+*.o
+*.d
+*.cache
+*.lib
+*.hex
+*.axf
+*.map
+MDK-ARM/fw_f411_based_i2c_bridge/

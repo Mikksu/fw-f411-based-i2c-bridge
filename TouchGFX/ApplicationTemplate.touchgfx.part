@@ -1,0 +1,22 @@
+
+{
+  "Application": {
+    "Name": "fw_analog_expander",
+    "TouchGfxPath": "../Middlewares/ST/touchgfx",
+    "AvailableColorDepths": [ 16 ],
+    "AvailableLCDs":
+    {
+      "16": "LCD16bpp"
+    },
+    "AvailableResolutions" : [
+      {
+        "Width": 240,
+        "Height": 135
+      }
+    ],
+    "PostGenerateTargetCommand" : "touchgfx update_project --project-file=../fw_analog_expander.ioc --platform=m4",
+    "Family" : "STM32F4",
+    "SubFamily" : "STM32F411"
+  },
+  "Version": "4.18.1"
+}
