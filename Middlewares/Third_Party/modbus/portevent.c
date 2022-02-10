@@ -28,23 +28,20 @@ static eMBEventType   eQueuedEvent;
 static BOOL           xEventInQueue;
 
 /* ----------------------- Start implementation -----------------------------*/
-BOOL
-xMBPortEventInit( void )
+BOOL xMBPortEventInit( void )
 {
     xEventInQueue = FALSE;
     return TRUE;
 }
 
-BOOL
-xMBPortEventPost( eMBEventType eEvent )
+BOOL xMBPortEventPost( eMBEventType eEvent )
 {
     xEventInQueue = TRUE;
     eQueuedEvent = eEvent;
     return TRUE;
 }
 
-BOOL
-xMBPortEventGet( eMBEventType * eEvent )
+BOOL xMBPortEventGet( eMBEventType * eEvent )
 {
     BOOL            xEventHappened = FALSE;
 

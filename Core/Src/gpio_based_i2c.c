@@ -136,16 +136,24 @@ static uint8_t wait_ack(void)
 
 int I2C_Master_MemWrite(uint8_t slaveAddress, uint8_t regStart, uint8_t length, uint8_t *data)
 {
-  if(start() == -1) goto _bus_busy;
+  if(start() == -1)
+		goto _bus_busy;
+	
   send_byte(slaveAddress & 0xFE);
-  if(wait_ack() == 1) goto _no_ack;
+  if(wait_ack() == 1) 
+		goto _no_ack;
+	
   send_byte(regStart);
-  if(wait_ack() == 1) goto _no_ack;
+  if(wait_ack() == 1) 
+		goto _no_ack;
+	
   for(int i = 0; i < length; i++)
   {
     send_byte(*(data + i));
-    if(wait_ack() == 1) goto _no_ack;
+    if(wait_ack() == 1) 
+			goto _no_ack;
   }
+	
   stop();
   return 0;
 
