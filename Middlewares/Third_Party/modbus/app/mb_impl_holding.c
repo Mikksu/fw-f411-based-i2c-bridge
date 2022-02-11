@@ -12,8 +12,6 @@ USHORT usRegHoldingBuf[REG_HOLDING_NREGS] = {100, 101, 102, 103, 104, 105, 106, 
 #include "mb_os_def.h"
 #include "gpio_based_i2c.h"
 
-#define REG_HOLDING_POS_DUT_IIC_OPER    (80)
-#define REG_HOLDING_POS_EXECUTE         (99)
 
 osMessageQDef(msgQueueHolding, 5, uint32_t);
 osMessageQId msgQueueHoldingHandle;
@@ -25,7 +23,11 @@ osThreadId regHoldingTaskHandle;
 osThreadId dutCommTaskhandle;
 
 
-DutI2cOper_TypeDef *dutI2c;
+static DutI2cOper_TypeDef *dutI2c;
+static uint16_t *pI2cRxBuff;
+static uint8_t i2cTxBuffTemp[MAX_SIZE_DUT_I2C_BUF];
+static uint8_t i2cRxBuffTemp[MAX_SIZE_DUT_I2C_BUF];
+
 
 static void SetErrorCode(uint16_t code)
 {
@@ -113,25 +115,34 @@ void StartTaskRegHolding(void const * argument)
 
 void StartTaskDutComm(void const * argument)
 {
-	
-	uint8_t i2cBuf[MAX_SIZE_DUT_I2C_BUF];
   for(;;)
   {
     osEvent evt = osSignalWait(0x1 | 0x2, osWaitForever);
     if(evt.status == osEventSignal)
     {
       // limit the length per read/write to 10 bytes.
-      if(dutI2c->RegLength > MAX_SIZE_DUT_I2C_BUF)
-        dutI2c->RegLength = MAX_SIZE_DUT_I2C_BUF;
+      if(dutI2c->TxLength > MAX_SIZE_DUT_I2C_BUF)
+        dutI2c->TxLength = MAX_SIZE_DUT_I2C_BUF;
+			
+			// limit the length per read/write to 10 bytes.
+      if(dutI2c->RxLength > MAX_SIZE_DUT_I2C_BUF)
+        dutI2c->RxLength = MAX_SIZE_DUT_I2C_BUF;
 
+			// convert the data written to the DUT to the byte array.
+			for(int i = 0; i < MAX_SIZE_DUT_I2C_BUF; i++)
+			{
+				i2cTxBuffTemp[i] = (uint8_t)dutI2c->TxBuff[i];
+			}
+			
+			// i2c operation
       if(evt.value.signals == 0x1) // I2C read
       {
-        int ret = I2C_Master_MemRead((uint8_t)dutI2c->SlaveAddress, (uint8_t)dutI2c->RegStart, (uint8_t)dutI2c->RegLength, i2cBuf);
+        int ret = I2C_Master_MemRead((uint8_t)dutI2c->SlaveAddress, (uint8_t)dutI2c->TxLength, i2cTxBuffTemp, dutI2c->RxLength, i2cRxBuffTemp);
         if(ret == 0)
         {
-          for(int i = 0; i < dutI2c->RegLength; i++)
+          for(int i = 0; i < dutI2c->RxLength; i++)
           {
-            dutI2c->Data[i] = (uint16_t)i2cBuf[i];
+            pI2cRxBuff[i] = (uint16_t)i2cRxBuffTemp[i];
           }
 
           SetErrorCode(ERR_NO);
@@ -151,12 +162,7 @@ void StartTaskDutComm(void const * argument)
       }
       else if(evt.value.signals == 0x2) // I2C write
       {
-        // convert the data written to the DUT to the byte array.
-        for(int i = 0; i < MAX_SIZE_DUT_I2C_BUF; i++)
-        {
-          i2cBuf[i] = (uint8_t)dutI2c->Data[i];
-        }
-        int ret = I2C_Master_MemWrite((uint8_t)dutI2c->SlaveAddress, (uint8_t)dutI2c->RegStart, (uint8_t)dutI2c->RegLength, i2cBuf);
+        int ret = I2C_Master_MemWrite((uint8_t)dutI2c->SlaveAddress, (uint8_t)dutI2c->TxLength, i2cTxBuffTemp);
         if(ret == 0)
         {
           SetErrorCode(ERR_NO);
@@ -196,7 +202,8 @@ void CreateMbHoldingProcTask(void)
   osThreadDef(dutCommTask, StartTaskDutComm, osPriorityNormal, 0, 256);
   dutCommTaskhandle = osThreadCreate(osThread(dutCommTask), NULL);
 	
-	 dutI2c = (DutI2cOper_TypeDef*)&usRegHoldingBuf[REG_HOLDING_POS_DUT_IIC_OPER];
+	 dutI2c = (DutI2cOper_TypeDef*)&usRegHoldingBuf[REG_HOLDING_POS_DUT_IIC_TX_BUFF];
+   pI2cRxBuff = &usRegInputBuf[REG_INPUT_POS_DUT_IIC_RX_BUFF];
 }
 
 #endif

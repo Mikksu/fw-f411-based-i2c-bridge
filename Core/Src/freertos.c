@@ -171,6 +171,7 @@ void StartDefaultTask(void const * argument)
   /* USER CODE BEGIN StartDefaultTask */
 	
   // turn off the 3-color-led.
+	HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(LEDB_GPIO_Port, LEDB_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(LEDG_GPIO_Port, LEDG_Pin, GPIO_PIN_SET);
 	
@@ -181,7 +182,7 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-		HAL_GPIO_TogglePin(LEDR_GPIO_Port, LEDR_Pin);
+		//HAL_GPIO_TogglePin(LEDR_GPIO_Port, LEDR_Pin);
     osDelay(1000);
   }
   /* USER CODE END StartDefaultTask */
@@ -205,7 +206,7 @@ void StartVcpMbRxTask(void const * argument)
     if(evt.status == osEventMessage && evt.value.p != NULL)
     {
 
-      HAL_GPIO_TogglePin(LEDG_GPIO_Port, LEDG_Pin);
+      HAL_GPIO_WritePin(LEDG_GPIO_Port, LEDG_Pin, GPIO_PIN_RESET);
 
       // get the address of the pool
       uint32_t pPool = (uint32_t)evt.value.p;
@@ -222,6 +223,8 @@ void StartVcpMbRxTask(void const * argument)
         fifo_put(hVcpRxFifo, vcpRxBuff.bufCdcRx[i]);
         pxMBFrameCBByteReceived();
       }
+			
+			HAL_GPIO_WritePin(LEDG_GPIO_Port, LEDG_Pin, GPIO_PIN_SET);
     }
   }
 }
@@ -240,6 +243,9 @@ void StartVcpMbTxTask(void const * argument)
     {
       if((evt.value.signals & 0x1) > 0)
       {
+				
+				HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, GPIO_PIN_RESET);
+				
         osThreadSuspend(vcpMbRxTaskHandle);
         osThreadSuspend(vcpMbTxPollTaskHandle);
         osThreadSuspend(mbTaskHandle);
@@ -254,6 +260,8 @@ void StartVcpMbTxTask(void const * argument)
 
         osThreadResume(vcpMbRxTaskHandle);
         osThreadResume(mbTaskHandle);
+				
+				HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, GPIO_PIN_SET);
 
       }
     }

@@ -71,13 +71,13 @@ static void send_nack(void)
 }
 
 
-static void send_byte(uint8_t send_byte)
+static void send_byte(uint8_t byte)
 {
 	uint8_t i;
 	
 	for(i = 0 ; i < 8 ; i++)
 	{
-		PIN_SDA ((send_byte & 0x80) >> 7);
+		PIN_SDA ((byte & 0x80) >> 7);
 		delay();
 		PIN_SCL (1);
 		delay();
@@ -87,7 +87,7 @@ static void send_byte(uint8_t send_byte)
 			PIN_SDA (1);	//发送最后一位之后，释放SDA总线，方便接收来自接收端的应答信号
 		}
 		//delay();
-		send_byte <<= 1;
+		byte <<= 1;
 	}
 }
 
@@ -134,7 +134,7 @@ static uint8_t wait_ack(void)
 	return ack_flag;
 }
 
-int I2C_Master_MemWrite(uint8_t slaveAddress, uint8_t regStart, uint8_t length, uint8_t *data)
+int I2C_Master_MemWrite(uint8_t slaveAddress, uint8_t length, uint8_t *data)
 {
   if(start() == -1)
 		goto _bus_busy;
@@ -143,9 +143,9 @@ int I2C_Master_MemWrite(uint8_t slaveAddress, uint8_t regStart, uint8_t length, 
   if(wait_ack() == 1) 
 		goto _no_ack;
 	
-  send_byte(regStart);
-  if(wait_ack() == 1) 
-		goto _no_ack;
+//  send_byte(regStart);
+//  if(wait_ack() == 1) 
+//		goto _no_ack;
 	
   for(int i = 0; i < length; i++)
   {
@@ -166,25 +166,43 @@ _bus_busy:
   return -2;
 }
 
-int I2C_Master_MemRead(uint8_t slaveAddress, uint8_t regStart, uint8_t length, uint8_t *data)
+int I2C_Master_MemRead(uint8_t slaveAddress, uint8_t txLen, uint8_t *txData, uint8_t rxLen, uint8_t *rxData)
 {
-  if(start() == -1) goto _bus_busy;
+  if(start() == -1) 
+		goto _bus_busy;
+	
   send_byte(slaveAddress & 0xFE); // slave address with nW.
-  if(wait_ack() == 1) goto _no_ack;
-  send_byte(regStart); // send the register index to read
-  if(wait_ack() == 1) goto _no_ack;
-  if(start() == -1) goto _bus_busy; // restart
-  send_byte(slaveAddress | 0x1); // slave address with R.
-  if(wait_ack() == 1) goto _no_ack;
-  for(int i = 0; i < length; i++)
+  if(wait_ack() == 1) 
+		goto _no_ack;
+	
+//  send_byte(regStart); // send the register index to read
+//  if(wait_ack() == 1) 
+//		goto _no_ack;
+	
+	for(int i = 0; i < txLen; i++)
   {
-    *(data + i) = read_byte();
-    if(i == (length - 1))
+    send_byte(*(txData + i));
+    if(wait_ack() == 1) 
+			goto _no_ack;
+  }
+	
+  if(start() == -1) 
+		goto _bus_busy; // restart
+	
+  send_byte(slaveAddress | 0x1); // slave address with R.
+  if(wait_ack() == 1) 
+		goto _no_ack;
+	
+  for(int i = 0; i < rxLen; i++)
+  {
+    *(rxData + i) = read_byte();
+    if(i == (rxLen - 1))
       send_nack();
     else
       send_ack();
 
   }
+	
   stop();
   return 0;
 
