@@ -20,10 +20,12 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "crc.h"
 #include "spi.h"
 #include "tim.h"
 #include "usb_device.h"
 #include "gpio.h"
+#include "app_touchgfx.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -92,6 +94,8 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI1_Init();
   MX_TIM4_Init();
+  MX_CRC_Init();
+  MX_TouchGFX_Init();
   /* USER CODE BEGIN 2 */
 
 

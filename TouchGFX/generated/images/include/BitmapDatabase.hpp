@@ -6,7 +6,7 @@
 #include <touchgfx/hal/Types.hpp>
 #include <touchgfx/Bitmap.hpp>
 
-const uint16_t BITMAP_STOP_SIGN_ID = 0;
+const uint16_t BITMAP_BACKGROUND_ID = 0;
 
 namespace BitmapDatabase
 {

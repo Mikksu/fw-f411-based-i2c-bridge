@@ -11,12 +11,15 @@ Screen1ViewBase::Screen1ViewBase()
     __background.setPosition(0, 0, 240, 135);
     __background.setColor(touchgfx::Color::getColorFromRGB(0, 0, 0));
 
-    scalableImage1.setBitmap(touchgfx::Bitmap(BITMAP_STOP_SIGN_ID));
-    scalableImage1.setPosition(70, 13, 101, 108);
-    scalableImage1.setScalingAlgorithm(touchgfx::ScalableImage::NEAREST_NEIGHBOR);
+    background.setPosition(0, 0, 240, 135);
+    background.setColor(touchgfx::Color::getColorFromRGB(0, 0, 0));
+
+    image1.setXY(9, 11);
+    image1.setBitmap(touchgfx::Bitmap(BITMAP_BACKGROUND_ID));
 
     add(__background);
-    add(scalableImage1);
+    add(background);
+    add(image1);
 }
 
 void Screen1ViewBase::setupScreen()

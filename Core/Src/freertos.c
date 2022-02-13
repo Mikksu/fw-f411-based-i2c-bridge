@@ -28,6 +28,7 @@
 /* USER CODE BEGIN Includes */
 /* USER CODE BEGIN Includes */
 #include "string.h"
+#include "app_touchgfx.h"
 #include "tftlcd.h"
 #include "usbd_cdc_if.h"
 #include "mb.h"
@@ -62,6 +63,8 @@ osThreadId            vcpMbTxTaskHandle;
 osThreadId            vcpMbTxPollTaskHandle;
 osThreadId            mbTaskHandle;
 
+osThreadId 						TaskTGFXVSyncHandle;
+
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
@@ -72,6 +75,10 @@ void StartVcpMbRxTask(void const * argument);
 void StartVcpMbTxTask(void const * argument);
 void StartVcpTxPollTask(void const * argument);
 void StartMbTask(void const * argument);
+
+// functions for TouchGFX
+extern void TE_Handler(void); 
+void StartTGFXVSyncTask(void const * argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -124,7 +131,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -152,6 +159,10 @@ void MX_FREERTOS_Init(void) {
   eMBInit(MB_RTU, 0X01, 1, 115200, MB_PAR_NONE);
   eMBEnable();
 
+	// start the V-Sync task for TouchGFX
+	osThreadDef(TaskTGFXVSync, StartTGFXVSyncTask, osPriorityNormal, 0, 128);  
+	TaskTGFXVSyncHandle = osThreadCreate(osThread(TaskTGFXVSync), NULL);
+	
 
   /* USER CODE END RTOS_THREADS */
 
@@ -179,6 +190,9 @@ void StartDefaultTask(void const * argument)
 	LCD_Init();
 	LCD_Clear(RED);
 
+	
+	MX_TouchGFX_Process();
+	
   /* Infinite loop */
   for(;;)
   {
@@ -290,6 +304,17 @@ void StartMbTask(void const * argument)
 		eMBPoll();
 	}
 
+}
+
+void StartTGFXVSyncTask(void const * args) 
+{  
+	osDelay(1000);  // wait for the LCD to be initialized.  
+	
+	for(;;)  
+	{    
+		TE_Handler();    
+		osDelay(50);  
+	} 
 }
 
 /* USER CODE END Application */
