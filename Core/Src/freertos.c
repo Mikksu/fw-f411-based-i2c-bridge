@@ -64,6 +64,7 @@ osThreadId            vcpMbTxPollTaskHandle;
 osThreadId            mbTaskHandle;
 
 osThreadId 						TaskTGFXVSyncHandle;
+osThreadId            TaskTouchGFXHandle;
 
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
@@ -79,6 +80,7 @@ void StartMbTask(void const * argument);
 // functions for TouchGFX
 extern void TE_Handler(void); 
 void StartTGFXVSyncTask(void const * argument);
+void StartTouchGfxTask(void const * argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -131,7 +133,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -158,6 +160,9 @@ void MX_FREERTOS_Init(void) {
   // create the MODBUS protocol stack task.
   eMBInit(MB_RTU, 0X01, 1, 115200, MB_PAR_NONE);
   eMBEnable();
+
+  osThreadDef(TaskTouchGFX, StartTouchGfxTask, osPriorityNormal, 0, 1024);
+  TaskTouchGFXHandle = osThreadCreate(osThread(TaskTouchGFX), NULL);
 
 	// start the V-Sync task for TouchGFX
 	osThreadDef(TaskTGFXVSync, StartTGFXVSyncTask, osPriorityNormal, 0, 128);  
@@ -187,16 +192,11 @@ void StartDefaultTask(void const * argument)
 	HAL_GPIO_WritePin(LEDG_GPIO_Port, LEDG_Pin, GPIO_PIN_SET);
 	
   // initialize the TFT LCD
-	LCD_Init();
-	LCD_Clear(RED);
 
-	
-	MX_TouchGFX_Process();
-	
   /* Infinite loop */
   for(;;)
   {
-		//HAL_GPIO_TogglePin(LEDR_GPIO_Port, LEDR_Pin);
+		HAL_GPIO_TogglePin(LEDB_GPIO_Port, LEDB_Pin);
     osDelay(1000);
   }
   /* USER CODE END StartDefaultTask */
@@ -304,6 +304,26 @@ void StartMbTask(void const * argument)
 		eMBPoll();
 	}
 
+}
+
+/**
+ * @brief The task to init TouchGFX.
+ */
+void StartTouchGfxTask(void const * argument)
+{
+  /* USER CODE BEGIN StartTouchGfxTask */
+
+  LCD_Init();
+  LCD_Clear(RED);
+
+  MX_TouchGFX_Process();
+
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(10);
+  }
+  /* USER CODE END StartTouchGfxTask */
 }
 
 void StartTGFXVSyncTask(void const * args) 
